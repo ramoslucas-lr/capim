@@ -36,8 +36,8 @@ def get_q(qs):
     raise IOError
 
 
-def encoded_fname(environ):
-    return get_q(environ['QUERY_STRING']).encode('hex') + '.json'
+def encoded_fname(identifier):
+    return identifier.encode('utf-8').hex() + '.json'
 
 
 def run(environ, start_response):
@@ -106,7 +106,7 @@ def run(environ, start_response):
         start_response('200 OK', headers)
         return [content]
 
-    elif path0 == 'load2.cgi':
+    elif path0 == 'load':
         fname = encoded_fname(environ)
         data = None
         headers = [('Content-Type', 'application/json'), ('Expires', '-1')]
@@ -126,16 +126,22 @@ def run(environ, start_response):
             data = ''
         start_response('200 OK', headers)
         return [data]
-    elif path0 == 'save2.cgi':
-        fname = encoded_fname(environ)
-        data = environ['wsgi.input'].read()
+    elif path0 == 'store':
+        fname = encoded_fname(path[1])
+        try:
+            request_body_size = int(environ.get('CONTENT_LENGTH', 0))
+        except (ValueError):
+            request_body_size = 0
+            
+        data = environ['wsgi.input'].read(request_body_size)
+
         with gzip.open(DATA_PREFIX + fname + '.gz', 'wb') as fp:
             fp.write(data)
         start_response(
             '200 OK',
             [('Content-Type', 'text/html'), ('Expires', '-1')]
         )
-        return ['OK']
+        return [b'OK']
     elif path0 == 'ping.cgi':
         content_disposition = (
             f'attachment; filename={get_q(environ["QUERY_STRING"])}'
