@@ -107,7 +107,7 @@ def run(environ, start_response):
         return [content]
 
     elif path0 == 'load':
-        fname = encoded_fname(environ)
+        fname = encoded_fname(path[1])
         data = None
         headers = [('Content-Type', 'application/json'), ('Expires', '-1')]
         try:
